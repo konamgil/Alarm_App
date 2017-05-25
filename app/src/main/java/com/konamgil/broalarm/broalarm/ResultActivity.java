@@ -1,5 +1,7 @@
 package com.konamgil.broalarm.broalarm;
 
+import android.app.NotificationManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +20,8 @@ public class ResultActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
         init();
+        NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.cancel(1234);
     }
 
     /**
@@ -26,5 +30,6 @@ public class ResultActivity extends AppCompatActivity {
     public void init(){
         tvTime = (TextView)findViewById(R.id.tvTime);
         tvTime.setText("알림이 수신되었습니다");
+
     }
 }

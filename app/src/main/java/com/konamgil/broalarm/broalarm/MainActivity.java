@@ -21,11 +21,11 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 
+import static android.content.Intent.FLAG_INCLUDE_STOPPED_PACKAGES;
+
 public class MainActivity extends AppCompatActivity {
 
     private Context context = MainActivity.this;
-    private Button btnStart;
-    private TimePicker mTimePicker;
     private TextView tvSetTime;
     private int setHour = 0;
     private int setMinute = 0;
@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
         //리시버 등록
         registerReceiver();
-        reStartTimeerOneMinureRegisterReceiver();
+        reStartTimerOneMinuteRegisterReceiver();
 
         init(); // 위젯 이닛
     }
@@ -47,11 +47,11 @@ public class MainActivity extends AppCompatActivity {
      */
     private void init(){
         //스타트 버튼
-        btnStart = (Button)findViewById(R.id.btnStart);
+        Button btnStart = (Button)findViewById(R.id.btnStart);
         btnStart.setOnClickListener(mOnClickListener);
 
         //타임피커
-        mTimePicker = (TimePicker) findViewById(R.id.mTimePicker);
+        TimePicker mTimePicker = (TimePicker) findViewById(R.id.mTimePicker);
         mTimePicker.setOnTimeChangedListener(mOnTimeChangedListener);
 
         //타임표시
@@ -80,6 +80,9 @@ public class MainActivity extends AppCompatActivity {
             setHour = hourOfDay;
             setMinute = minute;
         }
+
+
+
     };
 
     //타임피커에서 세팅된 시간 가져오기
@@ -122,17 +125,24 @@ public class MainActivity extends AppCompatActivity {
 
         //intent 구성
         Intent sendIntent = new Intent("com.konamgil.broalarm.broalarm.Start");
+
         PendingIntent sender = PendingIntent.getBroadcast(context, 0, sendIntent, 0);
 
         //알람매니저, time.getTimeInMillis() <-- 타임피커로 지정해준 시간
         AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), sender);
-        
 
-        //test용
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {                   //버전이 21이상(마시멜로 이상)
+            alarmManager.setAlarmClock(new AlarmManager.AlarmClockInfo(time.getTimeInMillis(),sender),sender);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {       //버전이 19~20(키캣~ 롤리팝)
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), sender);
+        } else {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), sender); //계속 0초 ~ 3초 오차범위가 생김
+        }
+
+            //test용
 //        alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 3000,sender);
     }
-
 
     //브로드캐스트 리시버 등록
     public void registerReceiver(){
@@ -146,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //다시 버튼 눌럿을 때 실행될 브로드 캐스트 리시버 설정
-    public void reStartTimeerOneMinureRegisterReceiver(){
+    public void reStartTimerOneMinuteRegisterReceiver(){
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -189,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
         //노티피케이션 설정
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         builder.setSmallIcon(R.drawable.smile)
-                .setAutoCancel(false)
+                .setAutoCancel(true)
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setLights(0xff00ff00, 500, 500)
                 .setContent(customView)
@@ -218,6 +228,11 @@ public class MainActivity extends AppCompatActivity {
             nm.cancel(1234);
             mThread.start();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
     }
 }
 
